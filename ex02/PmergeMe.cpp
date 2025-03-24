@@ -14,33 +14,78 @@ long PmergeMe::getTimeInMicroseconds() {
     return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
-// Merge-insert sort pour std::vector
 void PmergeMe::mergeInsertSortVector(std::vector<int>& data) {
     if (data.size() <= 1) return;
 
-    std::vector<int> left(data.begin(), data.begin() + data.size() / 2);
-    std::vector<int> right(data.begin() + data.size() / 2, data.end());
+    // Step 1: Pairing & Sorting
+    std::vector<int> mainChain, spareList;
+    for (size_t i = 0; i < data.size(); i += 2) {
+        if (i + 1 < data.size()) {
+            if (data[i] > data[i + 1]) {
+                mainChain.push_back(data[i]);
+                spareList.push_back(data[i + 1]);
+            } else {
+                mainChain.push_back(data[i + 1]);
+                spareList.push_back(data[i]);
+            }
+        } else {
+            mainChain.push_back(data[i]); // Unpaired element
+        }
+    }
 
-    mergeInsertSortVector(left);
-    mergeInsertSortVector(right);
+    // Step 2: Recursively sort the main chain
+    mergeInsertSortVector(mainChain);
 
-    std::merge(left.begin(), left.end(), right.begin(), right.end(), data.begin());
+    // Step 3: Insert spare list elements with binary insertion
+    for (std::vector<int>::iterator sit = spareList.begin(); sit != spareList.end(); ++sit) {
+        std::vector<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), *sit);
+        mainChain.insert(pos, *sit);
+    }
+
+    // Step 4: Copy result back to original data
+    data = mainChain;
 }
 
-// Merge-insert sort pour std::list
+void PmergeMe::binaryInsert(std::vector<int>& chain, int value) {
+    std::vector<int>::iterator pos = std::lower_bound(chain.begin(), chain.end(), value);
+    chain.insert(pos, value);
+}
+
 void PmergeMe::mergeInsertSortList(std::list<int>& data) {
     if (data.size() <= 1) return;
 
-    std::list<int> left, right;
-    std::list<int>::iterator mid = data.begin();
-    std::advance(mid, data.size() / 2);
+    // Step 1: Pairing & Sorting
+    std::list<int> mainChain, spareList;
+    std::list<int>::iterator it = data.begin();
 
-    left.splice(left.begin(), data, data.begin(), mid);
-    right.splice(right.begin(), data, data.begin(), data.end());
+    while (it != data.end()) {
+        int first = *it;
+        ++it;
 
-    mergeInsertSortList(left);
-    mergeInsertSortList(right);
+        if (it != data.end()) {
+            int second = *it;
+            if (first > second) {
+                mainChain.push_back(first);
+                spareList.push_back(second);
+            } else {
+                mainChain.push_back(second);
+                spareList.push_back(first);
+            }
+            ++it;
+        } else {
+            mainChain.push_back(first); // Unpaired element
+        }
+    }
 
-    data.merge(left);
-    data.merge(right);
+    // Step 2: Recursively sort the main chain
+    mergeInsertSortList(mainChain);
+
+    // Step 3: Insert spare list elements using binary insertion
+    for (std::list<int>::iterator sit = spareList.begin(); sit != spareList.end(); ++sit) {
+        std::list<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), *sit);
+        mainChain.insert(pos, *sit);
+    }
+
+    // Step 4: Copy result back to original data
+    data = mainChain;
 }

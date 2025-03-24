@@ -18,5 +18,6 @@ public:
 
 	long getTimeInMicroseconds();
 	void mergeInsertSortVector(std::vector<int>& data);
-	void mergeInsertSortList(std::list<int>& data);
+	void binaryInsert(std::vector<int> &chain, int value);
+	void mergeInsertSortList(std::list<int> &data);
 };
